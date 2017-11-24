@@ -60,10 +60,13 @@ This tutorial uses the [Boston Hubway dataset](https://s3.amazonaws.com/hubway-d
 2. Unzip each .zip file after download.
 
 ## Upload data files to Azure Blob storage
+You can use blob storage to host your data files.
+
 1. Create a new Azure Storage accout or use an existing one.
 ![azurestoragesetup.png](media/tutorial-bikeshare-dataprep/azurestoragesetup.png)
 
-2. Upload the data files.
+2. Upload the data files. 
+![azurestoragedatafile.png](media/tutorial-bikeshare-dataprep/azurestoragedatafile.png)
 
 
 
@@ -110,9 +113,9 @@ This tutorial uses the [Boston Hubway dataset](https://s3.amazonaws.com/hubway-d
 
    ![Image of the File(s)/Directory entry](media/tutorial-bikeshare-dataprep/datasources.png)
 
-2. **File Selection**: Add the weather data. Browse and select the `BostonWeather.csv` file that you downloaded earlier. Click **Next**.
+2. **File Selection**: Add the weather data. Browse and select the `BostonWeather.csv` file that you uploaded to __Azure Blob Storage__ earlier. Click **Next**.
 
-   ![Image of the file selection with BostonWeater.csv selected](media/tutorial-bikeshare-dataprep/pickweatherdatafile.png)
+   ![Image of the file selection with BostonWeater.csv selected](media/tutorial-bikeshare-dataprep/azureblobpickweatherdatafile.png)
 
 3. **File Details**: Verify the file schema that is detected. Azure Machine Learning Workbench analyzes the data in the file and infers the schema to use.
 
@@ -149,9 +152,9 @@ This tutorial uses the [Boston Hubway dataset](https://s3.amazonaws.com/hubway-d
 
    To continue, select __Next__. 
 
-5. **Sampling**: To create a sampling scheme, select the **+ New** button. Select the new __Top 10000__ row that is added, and then select __Edit__. Set __Sample Strategy__ to **Full File**, and then select **Apply**.
+5. **Sampling**: To create a sampling scheme, select the **Edit** button. Select the new __Top 10000__ row that is added, and then select __Edit__. Set __Sample Strategy__ to **Full File**, and then select **Apply**.
 
-   ![Image of adding a new sampling strategy](media/tutorial-bikeshare-dataprep/weatherdatasampling.png)
+   ![Image of adding a new sampling strategy](media/tutorial-bikeshare-dataprep/weatherdatasamplingfullfile.png)
 
    To use the __Full File__ strategy, select the __Full File__ entry and then select __Set as Active__. A star appears next to __Full File__ to indicate that it is the active strategy.
 
@@ -214,7 +217,7 @@ To return the __Data View__, select __Data__ from the upper left of the page.
    ![Image of the filter dialog](media/tutorial-bikeshare-dataprep/weatherfilterinfm15.png)
 
    > [!NOTE]
-   > FM-15 is a type of Meteorological Terminal Aviation Routine Weather Report (METAR). The FM-15 reports are empirically observed to be the most complete, with listtle missing data.
+   > FM-15 is a type of Meteorological Terminal Aviation Routine Weather Report (METAR). The FM-15 reports are empirically observed to be the most complete, with little missing data.
 
 ## Remove a column
 
@@ -235,6 +238,8 @@ You no longer need the __REPORTTYPE__ column. Right-click on the column header a
 3. Filter out the error values. Some columns have data type conversion problems. This problem is indicated by the red color in the __Data Quality Bar__ for the column.
 
    To remove the rows that have errors, right-click on the **HOURLYDRYBULBTEMPF** column heading. Select **Filter Column**. Use the default **I Want To** as **Keep Rows**. Change the **Conditions** drop down to select **is not error**. Select **OK** to apply the filter.
+
+![filtererrorvalues.png](media/tutorial-bikeshare-dataprep/filtererrorvalues.png)
 
 4. To eliminate the remaining error rows in the other columns, repeat this filter process for **HOURLYRelativeHumidity** and **HOURLYWindSpeed** columns.
 
@@ -327,6 +332,7 @@ To use the data in a prediction for two-hour time blocks, you must compute the a
 
    > [!TIP]
    > You can use the advanced mode of **Derive column by example** for this step by clicking the down arrow in the **Steps** pane. In the data grid, there are checkboxes next to the column names **DATE\_1** and **Hour Range** columns. Uncheck the checkbox next to the **Hour Range** column to see how this changes the output. In the absence of the **Hour Range** column as input, **12AM-2AM** is treated as a constant and is appended to the derived values. Select **Cancel** to return to the main grid without applying your changes.
+   ![derivedcolumnadvancededitdeselectcolumn.png](media/tutorial-bikeshare-dataprep/derivedcolumnadvancededitdeselectcolumn.png)
 
 10. To rename the column, double-click the header. Change the name to **Date Hour Range** and then press **Enter**.
 
@@ -352,7 +358,7 @@ The next step is to summarize the weather conditions by taking the mean of the v
 
 Changing the data in the numeric columns to a range of 0-1 allows some models to converge quickly. Currently there is no built-in transformation to generically do this transformation, but a Python script can be used to perform this operation.
 
-1. From the **Transform** menu, select **Transform Dataflow**.
+1. From the **Transform** menu, select **Transform Dataflow (Script)**.
 
 2. Enter the following code in the textbox that appears. If you have used the column names, the code should work without modification. You are writing a simple min-max normalization logic in Python.
 
@@ -612,7 +618,13 @@ For this tutorial, the name of the file is `BikeShare Data Prep.py`. This file i
 
 ## Save test data as a CSV file
 
-To save the **Join Result** Dataflow to a .CSV file, you must change the `BikeShare Data Prep.py` script. Update the Python script using the following code:
+To save the **Join Result** Dataflow to a .CSV file, you must change the `BikeShare Data Prep.py` script. 
+
+1. Open the project for editing in VSCode.
+
+![openprojectinvscode.png](media/tutorial-bikeshare-dataprep/openprojectinvscode.png)
+
+2. Update the Python script in the `BikeShare Data Prep.py` file using the following code:
 
 ```python
 from azureml.dataprep.package import run
@@ -624,7 +636,9 @@ df = run('BikeShare Data Prep.dprep', dataflow_idx=2)
 df.to_csv('Your Test Data File Path here')
 ```
 
-Select **Run** from the top of the screen. The script is submitted as a **Job** on the local machine. Once the job status changes to __Completed__, the file has been written to the specified location.
+3. Replace `Your Test Data File Path here` with the path to the output file that will be created.
+
+Return to the **Azure Machine Learning Workbench** application and select **Run** from the top of the screen. The script is submitted as a **Job** on the local machine. Once the job status changes to __Completed__, the file has been written to the specified location.
 
 ## Substitute data sources
 
