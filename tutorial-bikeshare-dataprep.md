@@ -40,6 +40,7 @@ In this tutorial, you use Azure Machine Learning services (preview) to learn how
 
 ## Prerequisites
 * Azure Machine Learning Workbench needs to be installed locally. For more information, follow the [installation Quickstart](quickstart-installation.md).
+* If you don't have the Azure CLI installed, follow the instructions to [install the latest Azure CLI version].(https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 * An [HDInsights Spark cluster](how-to-create-dsvm-hdi.md#create-an-apache-spark-for-azure-hdinsight-cluster-in-azure-portal) needs to be created in Azure.
 * An Azure Storage Account.
 * Familiarity with creating a new project in the Workbench.
