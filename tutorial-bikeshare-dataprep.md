@@ -30,6 +30,8 @@ In this tutorial, you use Azure Machine Learning services (preview) to learn how
 > * Generate a Data Preparation package
 > * Run the Data Preparation Package using Python
 > * Generate a training dataset by reusing the Data Preparation package for additional input files
+> * Execute scripts in a local Azure CLI window.
+> * Execute scripts in a cloud Azure HDInsight environment.
 
 > [!IMPORTANT]
 > This tutorial only prepares the data, it does not build the prediction model.
@@ -686,6 +688,33 @@ df.to_csv('Your Training Data File Path here')
 ```
 
 To submit a new job, use the **Run** icon at the top of the page. A **Job** is submitted with the new configuration. The output of this job is the Training Data. This data is created using the same Data Preparation steps that you created earlier. It may take few minutes to complete the job.
+
+## Run in an Azure HDInsight Environment
+
+1. In Azure Machine Learning Workbench, open the command-line window, select the **File** menu, and then select **Open Command Prompt**. Your command prompt starts in the project folder with the prompt `C:\Temp\myIris\>`.
+
+   >[!IMPORTANT]
+   >You must use the command-line window (opened from the workbench) to accomplish the steps that follow.
+
+2. Use the command prompt to log in to Azure. 
+
+   The workbench app and CLI use independent credential caches when authenticating against Azure resources. You only need to do this once until the cached token expires. The **az account list** command returns the list of subscriptions available to your login. If there is more than one, use the ID value from the desired subscription. Set that subscription as the default account to use with the **az account set -s** command, and then provide the subscription ID value. Then confirm the setting by using the account **show** command.
+
+   ```azurecli
+   REM login by using the aka.ms/devicelogin site
+   az login
+   
+   REM lists all Azure subscriptions you have access to 
+   az account list -o table
+   
+   REM sets the current Azure subscription to the one you want to use
+   az account set -s <subscriptionId>
+   
+   REM verifies that your current subscription is set correctly
+   az account show
+   ```
+
+
 
 ## Next steps
 You have completed the Bike-share Data Preparation tutorial. In this tutorial, you used Azure Machine Learning services (preview) to learn how to:
