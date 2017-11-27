@@ -715,7 +715,12 @@ To submit a new job, use the **Run** icon at the top of the page. A **Job** is s
    az account show
    ```
 
+3. Create the HDInsight run config. You will need the name of your cluster and the sshuser password.
+```azurecli
+az ml computetarget attach --name hdinsight --address bikeshareml.azurehdinsight.net --username sshuser --password <your password> --type cluster
 
+az ml experiment prepare -c hdinsight
+```
 
 ## Next steps
 You have completed the Bike-share Data Preparation tutorial. In this tutorial, you used Azure Machine Learning services (preview) to learn how to:
