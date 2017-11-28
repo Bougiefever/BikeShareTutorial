@@ -402,6 +402,7 @@ You have finished preparing the weather data. Next, prepare the trip data.
 
 1. To import the  `201701-hubway-tripdata.csv` file, use the steps in the [Create a new Data Source](#newdatasource) section. Use the following options during the import process:
 
+    * __File Selection__: Select **Azure Blob** when browsing to select the file.
     * __Sampling scheme__: **Full File** sampling scheme, make the sample active, and 
     * __Data Type__: Accept the defaults.
 
@@ -630,69 +631,44 @@ To save the **Join Result** Dataflow to a .CSV file, you must change the `BikeSh
 2. Update the Python script in the `BikeShare Data Prep.py` file using the following code:
 
 ```python
+import pyspark
+
 from azureml.dataprep.package import run
+from pyspark.sql.functions import *
+
+# start Spark session
+spark = pyspark.sql.SparkSession.builder.appName('BikeShare').getOrCreate()
 
 # dataflow_idx=2 sets the dataflow to the 3rd dataflow (the index starts at 0), the Join Result.
 df = run('BikeShare Data Prep.dprep', dataflow_idx=2)
+df.show(n=10)
+row_count_first = df.count()
 
-# Example file path: C:\\Users\\Jayaram\\BikeDataOut\\BikeShareTest.csv
-df.to_csv('Your Test Data File Path here')
+# Example file name: 'wasb://data-files@bikesharestorage.blob.core.windows.net/testata'
+# 'wasb://<your container name>@<your azure storage name>.blob.core.windows.net/<csv folder name>
+blobfolder = 'Your Azure Storage blob path'
+
+df.write.csv(blobfolder, mode='overwrite') 
+
+# retrieve csv file parts into one data frame
+csvfiles = "<Your Azure Storage blob path>/*.csv"
+df = spark.read.option("header", "false").csv(csvfiles)
+row_count_result = df.count()
+print(row_count_result)
+if (row_count_first == row_count_result):
+    print('counts match')
+else:
+    print('counts do not match')
+print('done')
 ```
 
-3. Replace `Your Test Data File Path here` with the path to the output file that will be created.
+3. Replace `Your Azure Storage blob path` with the path to the output file that will be created. Replace for both the **blobfolder** and **csvfiles** variables.
 
-Return to the **Azure Machine Learning Workbench** application and select **Run** from the top of the screen. The script is submitted as a **Job** on the local machine. Once the job status changes to __Completed__, the file has been written to the specified location.
+## Create HDInsight Run Configuration
 
-## Substitute data sources
+1. In Azure Machine Learning Workbench, open the command-line window, select the **File** menu, and then select **Open Command Prompt**. Your command prompt starts in the project folder with the prompt `C:\Projects\BikeShare>`.
 
-In the previous steps, you used the `201701-hubway-tripdata.csv` and `BostonWeather.csv` data sources to prepare the Test data. To use the package with the other trip data files, use the following steps:
-
-1. Create a new **Data Source** using the steps given earlier, with the following changes to the process:
-
-    * __File Selection__: When selecting a file, multi-select the six remaining trip tripdata .CSV files.
-
-        ![Load the six remaining files](media/tutorial-bikeshare-dataprep/selectsixfiles.png)
-
-        > [!NOTE]
-        > The __+5__ entry indicates that there are five additional files beyond the one that is listed.
-
-    * __File Details__: Set __Promote Headers Mode__ to **All Files Have The Same Headers**. This value indicates that each of the files contains the same header.
-
-        ![File details selection](media/tutorial-bikeshare-dataprep/headerfromeachfile.png) 
-
-   Save the name of this data source, as it is used in later steps.
-
-2. Select the folder icon to view the files in your project. Expand the __aml\_config__ directory, and then select the `local.runconfig` file.
-
-    ![Image of the location of local.runconfig](media/tutorial-bikeshare-dataprep/localrunconfig.png) 
-
-3. Add the following lines at the end of the `local.runconfig` file and then select the disk icon to save the file.
-
-    ```yaml
-    DataSourceSubstitutions:
-      201701-hubway-tripdata.dsource: 201501-hubway-tripdata.dsource
-    ```
-
-    This change replaces the original data source with the one that contains the six trip data files.
-
-## Save training data as a CSV file
-
-Navigate to the Python file `BikeShare Data Prep.py` that you edited earlier and provide a different File Path to save the Training Data.
-
-```python
-from azureml.dataprep.package import run
-# dataflow_idx=2 sets the dataflow to the 3rd dataflow (the index starts at 0), the Join Result.
-df = run('BikeShare Data Prep.dprep', dataflow_idx=2)
-
-# Example file path: C:\\Users\\Jayaram\\BikeDataOut\\BikeShareTrain.csv
-df.to_csv('Your Training Data File Path here')
-```
-
-To submit a new job, use the **Run** icon at the top of the page. A **Job** is submitted with the new configuration. The output of this job is the Training Data. This data is created using the same Data Preparation steps that you created earlier. It may take few minutes to complete the job.
-
-## Run in an Azure HDInsight Environment
-
-1. In Azure Machine Learning Workbench, open the command-line window, select the **File** menu, and then select **Open Command Prompt**. Your command prompt starts in the project folder with the prompt `C:\Temp\myIris\>`.
+ ![opencommandprompt.png](media/tutorial-bikeshare-dataprep/opencommandprompt.png)
 
    >[!IMPORTANT]
    >You must use the command-line window (opened from the workbench) to accomplish the steps that follow.
@@ -717,10 +693,98 @@ To submit a new job, use the **Run** icon at the top of the page. A **Job** is s
 
 3. Create the HDInsight run config. You will need the name of your cluster and the sshuser password.
 ```azurecli
-az ml computetarget attach --name hdinsight --address bikeshareml.azurehdinsight.net --username sshuser --password <your password> --type cluster
+az ml computetarget attach --name hdinsight --address <yourclustername>.azurehdinsight.net --username sshuser --password <your password> --type cluster
 
 az ml experiment prepare -c hdinsight
 ```
+ > [!NOTE]
+    > When a blank project is created, the default run configurations are **local** and **docker**. This step creates a new run configuration that is available in the **Azure Machine Learning Workbench** when you run your scripts. 
+
+## Run in HDInsight Cluster
+
+Return to the **Azure Machine Learning Workbench** application to run your script in the HDInsight cluster.
+
+1. Return to the home screen of your project by clicking the **Home** icon on the left.
+
+2. Select **hdinsight** from the **Path** dropdown list to run your script in the HDInsight cluster.
+
+1. Select **Run** from the top of the screen. The script is submitted as a **Job**. Once the job status changes to __Completed__, the file has been written to the specified location in your **Azure Storage Container**.
+
+![hdinsightrunscript.png](media/tutorial-bikeshare-dataprep/hdinsightrunscript.png)
+
+
+## Substitute data sources
+
+In the previous steps, you used the `201701-hubway-tripdata.csv` and `BostonWeather.csv` data sources to prepare the Test data. To use the package with the other trip data files, use the following steps:
+
+1. Create a new **Data Source** using the steps given earlier, with the following changes to the process:
+
+    * __File Selection__: When selecting a file, multi-select the six remaining trip tripdata .CSV files.
+
+        ![Load the six remaining files](media/tutorial-bikeshare-dataprep/browseazurestoragefortripdatafiles.png)
+
+        > [!NOTE]
+        > The __+5__ entry indicates that there are five additional files beyond the one that is listed.
+
+    * __File Details__: Set __Promote Headers Mode__ to **All Files Have The Same Headers**. This value indicates that each of the files contains the same header.
+
+        ![File details selection](media/tutorial-bikeshare-dataprep/headerfromeachfile.png) 
+
+   Save the name of this data source, as it is used in later steps.
+
+2. Select the folder icon to view the files in your project. Expand the __aml\_config__ directory, and then select the `hdinsight.runconfig` file.
+
+    ![Image of the location of hdinsight.runconfig](media/tutorial-bikeshare-dataprep/hdinsightsubstitutedatasources.png) 
+
+3. Add the following lines at the end of the `hdinsight.runconfig` file and then select the disk icon to save the file.
+
+    ```yaml
+    DataSourceSubstitutions:
+      201701-hubway-tripdata.dsource: 201501-hubway-tripdata.dsource
+    ```
+
+    This change replaces the original data source with the one that contains the six trip data files.
+
+## Save training data as a CSV file
+
+Navigate to the Python file `BikeShare Data Prep.py` that you edited earlier and provide a different File Path to save the Training Data.
+
+```python
+import pyspark
+
+from azureml.dataprep.package import run
+from pyspark.sql.functions import *
+
+# start Spark session
+spark = pyspark.sql.SparkSession.builder.appName('BikeShare').getOrCreate()
+
+# dataflow_idx=2 sets the dataflow to the 3rd dataflow (the index starts at 0), the Join Result.
+df = run('BikeShare Data Prep.dprep', dataflow_idx=2)
+df.show(n=10)
+row_count_first = df.count()
+
+# Example file name: 'wasb://data-files@bikesharestorage.blob.core.windows.net/traindata'
+# 'wasb://<your container name>@<your azure storage name>.blob.core.windows.net/<csv folder name>
+blobfolder = 'Your Azure Storage blob path'
+
+df.write.csv(blobfolder, mode='overwrite') 
+
+# retrieve csv file parts into one data frame
+csvfiles = "<Your Azure Storage blob path>/*.csv"
+df = spark.read.option("header", "false").csv(csvfiles)
+row_count_result = df.count()
+print(row_count_result)
+if (row_count_first == row_count_result):
+    print('counts match')
+else:
+    print('counts do not match')
+print('done')
+```
+
+1. Use the folder name '**traindata**' for the training data output.
+
+2. To submit a new job, use the **Run** icon at the top of the page. Make sure **hdinsight** is selected. A **Job** is submitted with the new configuration. The output of this job is the Training Data. This data is created using the same Data Preparation steps that you created earlier. It may take few minutes to complete the job.
+
 
 ## Next steps
 You have completed the Bike-share Data Preparation tutorial. In this tutorial, you used Azure Machine Learning services (preview) to learn how to:
