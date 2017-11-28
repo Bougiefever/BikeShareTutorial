@@ -33,10 +33,6 @@ In this tutorial, you use Azure Machine Learning services (preview) to learn how
 > * Execute scripts in a local Azure CLI window.
 > * Execute scripts in a cloud Azure HDInsight environment.
 
-> [!IMPORTANT]
-> This tutorial only prepares the data, it does not build the prediction model.
->
-> You can use the prepared data to train your own prediction models. For example, you might create a model to predict bike demand during a 2-hour window.
 
 ## Prerequisites
 * Azure Machine Learning Workbench needs to be installed locally. For more information, follow the [installation Quickstart](quickstart-installation.md).
@@ -44,6 +40,7 @@ In this tutorial, you use Azure Machine Learning services (preview) to learn how
 * An [HDInsights Spark cluster](how-to-create-dsvm-hdi.md#create-an-apache-spark-for-azure-hdinsight-cluster-in-azure-portal) needs to be created in Azure.
 * An Azure Storage Account.
 * Familiarity with creating a new project in the Workbench.
+* Although it is not required, it is helpful to have [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) installed so you can upload, download, and view the blobs in your storage account. 
 
 ## Data acquisition
 This tutorial uses the [Boston Hubway dataset](https://s3.amazonaws.com/hubway-data/index.html) and Boston weather data from [NOAA](http://www.noaa.gov/).
@@ -65,13 +62,18 @@ This tutorial uses the [Boston Hubway dataset](https://s3.amazonaws.com/hubway-d
 ## Upload data files to Azure Blob storage
 You can use blob storage to host your data files.
 
-1. Create a new Azure Storage accout or use an existing one.
-![azurestoragesetup.png](media/tutorial-bikeshare-dataprep/azurestoragesetup.png)
+1. Use the same Azure Storage account that is used for the HDInsight cluster you are using.
 
-2. Upload the data files. 
+![hdinsightstorageaccount.png](media/tutorial-bikeshare-dataprep/hdinsightstorageaccount.png)
+
+2. Create a new container named '**data-files**' to store the BikeShare data files.
+
+4. Upload the data files. Upload the `BostonWeather.csv` to a folder named `weather`, and the trip data files to a folder named `tripdata`.
+
 ![azurestoragedatafile.png](media/tutorial-bikeshare-dataprep/azurestoragedatafile.png)
 
-
+> [!TIP]
+> You may also use **Azure Storage Explorer** to upload blobs. This tool can be used when you want to view the contents of any of the files generated in the tutorial as well.
 
 ## Learn about the datasets
 1. The __Boston weather__ file contains the following weather-related fields, reported on hourly basis:
@@ -133,6 +135,8 @@ You can use blob storage to host your data files.
    > * __Skip Lines Mode__: Don't skip
    > * __File Encoding__: utf-8
    > * __Promote Headers Mode__: Use Headers From First File
+   >    
+
 
    The preview of the data should display the following columns:
    * **Path**
@@ -662,7 +666,7 @@ else:
 print('done')
 ```
 
-3. Replace `Your Azure Storage blob path` with the path to the output file that will be created. Replace for both the **blobfolder** and **csvfiles** variables.
+3. Replace `Your Azure Storage blob path` with the path to the output file that will be created. Replace for both the `blobfolder` and `csvfiles` variables.
 
 ## Create HDInsight Run Configuration
 
@@ -675,7 +679,7 @@ print('done')
 
 2. Use the command prompt to log in to Azure. 
 
-   The workbench app and CLI use independent credential caches when authenticating against Azure resources. You only need to do this once until the cached token expires. The **az account list** command returns the list of subscriptions available to your login. If there is more than one, use the ID value from the desired subscription. Set that subscription as the default account to use with the **az account set -s** command, and then provide the subscription ID value. Then confirm the setting by using the account **show** command.
+   The workbench app and CLI use independent credential caches when authenticating against Azure resources. You only need to do this once until the cached token expires. The `az account list` command returns the list of subscriptions available to your login. If there is more than one, use the ID value from the desired subscription. Set that subscription as the default account to use with the `az account set -s` command, and then provide the subscription ID value. Then confirm the setting by using the account `show` command.
 
    ```azurecli
    REM login by using the aka.ms/devicelogin site
@@ -706,7 +710,7 @@ Return to the **Azure Machine Learning Workbench** application to run your scrip
 
 1. Return to the home screen of your project by clicking the **Home** icon on the left.
 
-2. Select **hdinsight** from the **Path** dropdown list to run your script in the HDInsight cluster.
+2. Select **hdinsight** from the dropdown list to run your script in the HDInsight cluster.
 
 1. Select **Run** from the top of the screen. The script is submitted as a **Job**. Once the job status changes to __Completed__, the file has been written to the specified location in your **Azure Storage Container**.
 
@@ -736,7 +740,9 @@ In the previous steps, you used the `201701-hubway-tripdata.csv` and `BostonWeat
 
     ![Image of the location of hdinsight.runconfig](media/tutorial-bikeshare-dataprep/hdinsightsubstitutedatasources.png) 
 
-3. Add the following lines at the end of the `hdinsight.runconfig` file and then select the disk icon to save the file.
+3. Click the Edit button to open the file in VSCode.
+
+4. Add the following lines at the end of the `hdinsight.runconfig` file and then select the disk icon to save the file.
 
     ```yaml
     DataSourceSubstitutions:
@@ -781,7 +787,7 @@ else:
 print('done')
 ```
 
-1. Use the folder name '**traindata**' for the training data output.
+1. Use the folder name `traindata` for the training data output.
 
 2. To submit a new job, use the **Run** icon at the top of the page. Make sure **hdinsight** is selected. A **Job** is submitted with the new configuration. The output of this job is the Training Data. This data is created using the same Data Preparation steps that you created earlier. It may take few minutes to complete the job.
 
